@@ -1,0 +1,139 @@
+#Assembly Calculator
+#Author: Nazir Selim Özcan 2022
+
+.data
+string1: .asciiz "Birinci sayiyi yaziniz\n"
+opmesaj: .asciiz "islem tipini giriniz\n"
+string2: .asciiz "Ikinci sayiyi yaziniz\n"
+sonucmsj: .asciiz "Hesap sonucu\n"
+hatamsj: .asciiz "Hatali operator girdiniz, secenekler:+,-,*,/\n"
+newline: .asciiz "\n"
+carrymsj: .asciiz "Bolmeden kalan sayi:\n"
+
+operand1: .word 1
+operand2: .word 1
+operator: .word 2
+
+out: .word 1
+kalan: .word 1
+
+.text
+main:
+#operand-1 mesajý
+li $v0,4
+la $a0,string1
+syscall
+#input operand-1
+li $v0,5
+syscall
+sw $v0,operand1 #Operand-1 inputu belleðe kaydet
+
+#iþlem mesajý
+li $v0,4
+la $a0,opmesaj
+syscall
+
+optype:
+#Operatör sembolünü al
+li $v0,8
+la $a0,operator
+la $a1,2
+syscall
+
+lw $t0,0($a0)
+
+#New line
+li $v0,4
+la $a0,newline
+syscall
+
+#Ýþlem kontrolü
+li $t1,'+'
+li $t2,'-'
+li $t3,'*'
+li $t4,'/'
+
+beq $t0,$t1,ikinciop
+beq $t0,$t2,ikinciop
+beq $t0,$t3,ikinciop
+beq $t0,$t4,ikinciop
+j Hata
+
+ikinciop:
+#operand-2 mesajý
+li $v0,4
+la $a0,string2
+syscall
+#input operand-2
+li $v0,5
+syscall
+sw $v0,operand2 #Operand-2 inputu belleðe kaydet
+
+
+lw $s1,operand1
+lw $s2,operand2
+lw $s0,out
+lw $s4,kalan
+
+#Ýþlem tipine karar ver
+beq $t0,$t1,toplama
+beq $t0,$t2,cikarma
+beq $t0,$t3,carpma
+beq $t0,$t4,bolme
+
+toplama:
+add $s0,$s1,$s2
+sw $s0,out #sonucu belleðe kaydettik
+j print
+
+cikarma:
+sub $s0,$s1,$s2
+sw $s0,out #sonucu belleðe kaydettik
+j print
+
+carpma:
+mult $s1,$s2
+mflo $s0
+sw $s0,out
+j print
+
+bolme:
+div $s1,$s2
+mflo $s0 #bölümü ifade ediyor
+mfhi $s4 #kalaný ifade ediyor
+sw $s4,kalan,
+#Kalaný yazdýr
+li $v0,4
+la $a0,carrymsj
+syscall
+li $v0,1
+lw $a0,kalan
+#New line
+li $v0,4
+la $a0,newline
+syscall
+sw $s0,out
+j print
+
+print:
+li $v0,4
+la $a0,sonucmsj
+syscall
+li $v0,1
+lw $a0,out
+syscall
+#New line
+li $v0,4
+la $a0,newline
+syscall
+
+j main
+
+Hata:
+#Hata mesajý
+li $v0,4
+la $a0,hatamsj
+syscall
+
+j optype
+
